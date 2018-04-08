@@ -15,9 +15,9 @@ public class GrayscaleImage {
 	static BufferedImage greyImage;
 	 static BufferedImage greyNoisedImage;
 	public static void main(String...strings) throws IOException {
-		  img = ImageIO.read(new File("Images/tm.png")); // Grayscale Image output
-		  greyImage =  ImageIO.read(new File("Images/tm.png"));
-		  greyNoisedImage=   ImageIO.read(new File("Images/tm.png"));
+		  img = ImageIO.read(new File("Images/mandrill.png")); // Grayscale Image output
+		  greyImage =  ImageIO.read(new File("Images/mandrill.png"));
+		  greyNoisedImage=   ImageIO.read(new File("Images/mandrill.png"));
 		    final int width = img.getWidth() ;
 		    final int height = img.getHeight() ;
 		    coloeredPixels = new int[height][width] ;
@@ -32,11 +32,11 @@ public class GrayscaleImage {
 		     greyNoisedImage =setImageToPixels(greyNoisePixels,greyNoisedImage);
 		    
 		    try {
-		    	File outputFile = new File("Images/GreyImage.jpg");
-		    	ImageIO.write(greyImage, "jpg", outputFile);
+		    	File outputFile = new File("Images/GreyImage.png");
+		    	ImageIO.write(greyImage, "png", outputFile);
 
-		    	File outputFile2 = new File("Images/GreyNoisedImage.jpg");
-			    		ImageIO.write(greyNoisedImage, "jpg", outputFile2);
+		    	File outputFile2 = new File("Images/GreyNoisedImage.png");
+			    		ImageIO.write(greyNoisedImage, "png", outputFile2);
 		    }
 		    catch(IOException e) {
 		    	
@@ -88,9 +88,9 @@ public class GrayscaleImage {
 	        }
 		for (int y=0 ; y <tmp.length ; y++)
 	        for (int x=0 ; x < tmp[y].length ; x++) {
-		int r = img.getRaster().getSample(x, y, 0) ;
-        int g = img.getRaster().getSample(x, y, 1) ;
-        int b = img.getRaster().getSample(x, y, 2) ;
+	        	 int r = (tmp[y][x] >> 16) & 0xFF;
+	             int g = (tmp[y][x] >> 8) & 0xFF;
+	             int b = (tmp[y][x] & 0xFF);
         tmp[y][x] = r+g+b;
         tmp[y][x] = (int)( 0.2125 * r + 0.7125 *  g + 0.0721 * b)  ;
        
@@ -109,9 +109,9 @@ public class GrayscaleImage {
 		
 		for (int y=0 ; y < tmp.length ; y++)
 	        for (int x=0 ; x < tmp[y].length ; x++) {
-	        	int r = img.getRaster().getSample(x, y, 0) ;
-	            int g = img.getRaster().getSample(x, y, 1) ;
-	            int b = img.getRaster().getSample(x, y, 2) ;
+	        	int r = (tmp[y][x] >> 16) & 0xFF;
+	             int g = (tmp[y][x] >> 8) & 0xFF;
+	             int b = (tmp[y][x] & 0xFF);
 	            tmp[y][x] = r+g+b;
 	            tmp[y][x] = (int)( 0.2125 * r + 0.7125 *  g + 0.0721 * b)+noise()  ;
 	           
