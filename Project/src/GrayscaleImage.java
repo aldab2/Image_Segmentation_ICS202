@@ -1,4 +1,5 @@
 import java.awt.image.BufferedImage;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.*;
@@ -6,6 +7,7 @@ import java.awt.Color;
 import java.awt.image.*;
 
 import javax.imageio.ImageIO;
+
 
 public class GrayscaleImage {
 	static int[][] coloeredPixels;
@@ -41,7 +43,19 @@ public class GrayscaleImage {
 		    catch(IOException e) {
 		    	
 		    }
+		    
 		   
+	}
+	
+	public static BufferedImage segmentImage(int[][] greyPixels, int numOfSegments) {
+		WeightedGraph<Integer> graph = new WeightedGraph<>();
+		int k=0;
+		for(int i=0;i<greyPixels.length;i++) {
+			for (int j=0;j<greyPixels[i].length;j++) {
+				graph.addTwoWayEdge(++k, 0, ++k);
+			}
+		}
+		return null;
 	}
 
 	public static BufferedImage setImageToPixels(int[][] pixels, BufferedImage img2) {
@@ -128,4 +142,6 @@ public class GrayscaleImage {
 	public static int noise() {
 		return (int)(255*(Math.random()-0.5));
 	}
+	
+	
 }
