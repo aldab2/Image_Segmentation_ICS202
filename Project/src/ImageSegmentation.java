@@ -1,8 +1,11 @@
 import java.awt.image.BufferedImage;
+
 import java.io.IOException;
 import java.util.HashMap;
 
 import javax.xml.datatype.DatatypeConfigurationException;
+
+//import WeightedGraph.Edge;
 
 public class ImageSegmentation {
 	static BufferedImage img = null;
@@ -16,7 +19,7 @@ public class ImageSegmentation {
 		
 		fourWeightedGraph = new WeightedGraph<>();
 		fourWeightedGraph=fourNeighbor();
-graph = fourWeightedGraph;
+		//graph = fourWeightedGraph;
 
 		
 		//getNode(0).doubleWayAdd(100, graph.nodes.get(1));		
@@ -26,7 +29,7 @@ graph = fourWeightedGraph;
 		
 		System.out.println("-----------------------------------");
 		
-		System.out.println(getNode(10).edges);
+		System.out.println(getNode(fourWeightedGraph,10).edges);
 	
 	}
 
@@ -136,6 +139,11 @@ graph = fourWeightedGraph;
 	}
 	
 	public static WeightedGraph<Integer>.Node getNode(int index) {
+		
+		
+		return graph.nodes.get(index);
+	}
+public static WeightedGraph<Integer>.Node getNode(WeightedGraph<Integer> graph, int index) {
 		
 		
 		return graph.nodes.get(index);

@@ -267,4 +267,5 @@ public class WeightedGraph<E> {
             return (this.weight < o.weight ? -1 : (this.weight > o.weight ? 1 : 0));
         }
     }
+    
 }
