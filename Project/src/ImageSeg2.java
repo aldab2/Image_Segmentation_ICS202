@@ -7,38 +7,44 @@ import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 
 import org.jgrapht.*;
 import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm.SpanningTree;
 import org.jgrapht.alg.spanning.KruskalMinimumSpanningTree;
+import org.jgrapht.event.TraversalListener;
+import org.jgrapht.event.TraversalListenerAdapter;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.sun.javafx.geom.Edge;
 
 
 public class ImageSeg2 {
 	
-	//static int[][] coloeredPixels= {{10,2,4,7},{5,6,11,8},{9,13,3,2},{10,15,13,4}};
-	static int[][] coloeredPixels = {{1,5,2},{4,9,6},{3,7,2}};
+	static int[][] coloeredPixels= {{10,2,4,7},{5,6,11,8},{9,13,3,2},{10,15,13,4}};
+	//static int[][] coloeredPixels = {{1,5,2},{4,9,6},{3,7,2}};
 //	static int[][] coloeredPixels = new int[550][500];
 	static int rows = coloeredPixels.length;
 	static int cols = coloeredPixels[0].length;
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> fourNeighbored;
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> eightNeighbored;	
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph;
+public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> forest;
 public static HashMap<Integer, Integer> map;
 
 	public static void main(String...strings) {
 		graph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		fourNeighbored = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+		forest = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		map = new HashMap<>();
 		
 		eightNeighbored =  new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		for(int i=0;i<(rows*cols);i++) {
 			graph.addVertex(i);
-			
+			forest.addVertex(i);
 		}
 		
 	//	graph.setEdgeWeight(graph.addEdge(0, 3), Math.abs(coloeredPixels[0][0]-coloeredPixels[0][1]));
@@ -46,30 +52,45 @@ public static HashMap<Integer, Integer> map;
 	
 	
 		
-		
-		
-		
-		
-		
 		fourNeighbored = fourNeighbored(graph);
+
+		//forest = fourNeighbored(graph);
+		//System.out.println(fourNeighbored);
 		
 		
-		
+
 		//KruskalMinimumSpanningTree<Integer,DefaultWeightedEdge > mst = new KruskalMinimumSpanningTree<>(fourNeighbored); 
+		int R= 4;
 		long start = System.nanoTime() ;
 		MySpanningTree<Integer> mymst =   mstKruskal(fourNeighbored);
+		System.out.println(mymst.stackOfEdges);
+		
+	for(int i=1;i<R;i++) {
+		//System.out.println("Popped:"+mymst.pop());
+		}
+		
+	
+		
+	/*	for(int i=0;i<mymst.stackOfEdges.size();i++) {
+			DefaultWeightedEdge edge = mymst.stackOfEdges.peek();
+			forest.removeAllEdges(mymst.nonEdges);
+		}*/
+		customIteration(new DepthFirstIterator<>(forest), new MyTravsersalListener<>());
+
 		
 		//Collections.sort(mymst.edges,(int1,int2)-> Integer.valueOf(int1).compareTo(int2));
 		//eightNeighbored = eightNeighbored(graph);
+		
+		
 		udpateMaping(map);
-		for(int i=0;i<map.size();i++)
-			System.out.println(map.get(i));
+		/*for(int i=0;i<map.size();i++)
+			System.out.println(map.get(i));*/
 		
 		//System.out.println(mst.getSpanningTree());
 
 		
-		System.out.println(mymst.weight + " And : "+mymst.edges);
-		System.out.println("Time is "+(System.nanoTime()-start)/1e9);
+		System.out.println(mymst.weight + " Stack: "+mymst.stackOfEdges+"\n Non Edges: "+ mymst.nonEdges + "\n Forest edges: " + forest.edgeSet());
+		//System.out.println("Time is "+(System.nanoTime()-start)/1e9);
 		
 
 
@@ -79,14 +100,15 @@ public static HashMap<Integer, Integer> map;
 		
 	}
 	public static MySpanningTree<Integer> rmst(SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph, int pixels, int reigons){
-		MySpanningTree<Integer> mySpanningTree = new MySpanningTree<>(0, null);
+		MySpanningTree<Integer> mySpanningTree = new MySpanningTree<>(0, null,null);
 		for( int i= pixels-2;i>reigons-1;i--) {
 		 mySpanningTree=	mstKruskal(graph);
-		 	for(int j=mySpanningTree.edges.size();j>=i;j--) {
-		 		 DefaultWeightedEdge edge = mySpanningTree.edges.remove(j);
+		 	for(int j=mySpanningTree.stackOfEdges.size();j>=i;j--) {
+		 		 DefaultWeightedEdge edge = mySpanningTree.stackOfEdges.remove(j);
 		 		 mySpanningTree.weight -= graph.getEdgeWeight(edge);
 		 		 mySpanningTree.numOfEdges -=1;
-		 		 udpateMaping(map);
+		 		
+		 		 		 		 
 		 	}
 		 	
 		 	
@@ -96,16 +118,28 @@ public static HashMap<Integer, Integer> map;
 		
 		return mySpanningTree ;
 	}  
+	public static void customIteration(DepthFirstIterator<Integer, DefaultWeightedEdge> dfi,MyTravsersalListener<Integer, DefaultWeightedEdge> adapter) {
+		
+	    dfi.addTraversalListener(adapter);
+	    while (dfi.hasNext()) {
+	    	System.out.println("Is Start? : "+adapter.isStartOfNewTree);
+	        System.out.println("Next is : "+dfi.next());
+    		
+    		
+
+	    }
+	}
 	
 	public static  MySpanningTree<Integer> mstKruskal(SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph ){
 		double weight = 0;
 		
 		ArrayList<Integer> vertexSet = new ArrayList<>(graph.vertexSet());
 		DisjointSet disjointSet = new DisjointSet(vertexSet);
+		Stack<DefaultWeightedEdge> stackOfEdges = new Stack<>();
 	
 		ArrayList<DefaultWeightedEdge> edges = new ArrayList<>(graph.edgeSet());
 		Collections.sort(edges, (e1,e2) -> Double.valueOf(graph.getEdgeWeight(e1)).compareTo(graph.getEdgeWeight(e2)));
-		ArrayList<DefaultWeightedEdge> edgelist = new ArrayList<>();
+		ArrayList<DefaultWeightedEdge> nonEdgelist = new ArrayList<>();
 		
 		
 		for(DefaultWeightedEdge edge : edges) {
@@ -115,17 +149,19 @@ public static HashMap<Integer, Integer> map;
 			//System.out.println("1>>>");
 			if(disjointSet.find(src).equals(disjointSet.find(target))) {
 				//System.out.println("we are here");
+				nonEdgelist.add(edge);
 				continue;
 			}
 			//System.out.println("2>>>");
 			disjointSet.union(src, target);
-			edgelist.add(edge);
+			stackOfEdges.push(edge);
 			weight += graph.getEdgeWeight(edge);
 			//System.out.println("3>>>");
 			
 		}
+	
 				
-		MySpanningTree<Integer> spanningTree= new MySpanningTree(weight, edgelist);
+		MySpanningTree<Integer> spanningTree= new MySpanningTree(weight, nonEdgelist,stackOfEdges);
 		Collections.sort(edges, (e1,e2) -> Double.valueOf(graph.getEdgeWeight(e1)).compareTo(graph.getEdgeWeight(e2)));
 		return spanningTree; 
 	}

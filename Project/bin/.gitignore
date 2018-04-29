@@ -1,4 +1,12 @@
-/DisjointEdge.class
+/AnotherGracscaleImage.class
+/DijkstraTest.class
 /DisjointSet.class
-/SpanningTree.class
+/GrayscaleImage.class
+/ImageSeg2.class
+/ImageSegmentation.class
 /MySpanningTree.class
+/Test.class
+/WeightedGraph$Edge.class
+/WeightedGraph$Node.class
+/WeightedGraph.class
+/MyTravsersalListener.class
