@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import org.jgrapht.*;
+import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm.SpanningTree;
 import org.jgrapht.alg.spanning.KruskalMinimumSpanningTree;
 import org.jgrapht.event.TraversalListener;
@@ -24,8 +25,8 @@ import com.sun.javafx.geom.Edge;
 
 public class ImageSeg2 {
 	
-	static int[][] coloeredPixels= {{10,2,4,7},{5,6,11,8},{9,13,3,2},{10,15,13,4}};
-	//static int[][] coloeredPixels = {{1,5,2},{4,9,6},{3,7,2}};
+	//static int[][] coloeredPixels= {{10,2,4,7},{5,6,11,8},{9,13,3,2},{10,15,13,4}};
+static int[][] coloeredPixels = {{1,5,2},{4,9,6},{3,7,2}};
 //	static int[][] coloeredPixels = new int[550][500];
 	static int rows = coloeredPixels.length;
 	static int cols = coloeredPixels[0].length;
@@ -34,6 +35,7 @@ public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> eightNeighbored;
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph;
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> forest;
 public static HashMap<Integer, Integer> map;
+public static ArrayList<Integer> anything = new ArrayList<>();
 
 	public static void main(String...strings) {
 		graph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
@@ -66,30 +68,31 @@ public static HashMap<Integer, Integer> map;
 		System.out.println(mymst.stackOfEdges);
 		
 	for(int i=1;i<R;i++) {
-		//System.out.println("Popped:"+mymst.pop());
+		System.out.println("Popped:"+mymst.pop());
 		}
 		
 	
 		
-	/*	for(int i=0;i<mymst.stackOfEdges.size();i++) {
-			DefaultWeightedEdge edge = mymst.stackOfEdges.peek();
-			forest.removeAllEdges(mymst.nonEdges);
-		}*/
-		customIteration(new DepthFirstIterator<>(forest), new MyTravsersalListener<>());
-
+		for(int i=0;i<mymst.stackOfEdges.size();i++) {
+			fourNeighbored.removeAllEdges(mymst.nonEdges);
+		}
+		
+		udpateMaping(map);
+		customIteration(new DepthFirstIterator<>(fourNeighbored),new MyTravsersalListener<>(), customIteration(new DepthFirstIterator<>(fourNeighbored), new MyTravsersalListener<>()));
+System.out.println(map);
 		
 		//Collections.sort(mymst.edges,(int1,int2)-> Integer.valueOf(int1).compareTo(int2));
 		//eightNeighbored = eightNeighbored(graph);
 		
 		
-		udpateMaping(map);
+		
 		/*for(int i=0;i<map.size();i++)
 			System.out.println(map.get(i));*/
 		
 		//System.out.println(mst.getSpanningTree());
 
 		
-		System.out.println(mymst.weight + " Stack: "+mymst.stackOfEdges+"\n Non Edges: "+ mymst.nonEdges + "\n Forest edges: " + forest.edgeSet());
+		System.out.println(mymst.weight + " Stack: "+mymst.stackOfEdges+"\n Non Edges: "+ mymst.nonEdges + "\n Forest edges: " + fourNeighbored.edgeSet());
 		//System.out.println("Time is "+(System.nanoTime()-start)/1e9);
 		
 
@@ -118,23 +121,89 @@ public static HashMap<Integer, Integer> map;
 		
 		return mySpanningTree ;
 	}  
-	public static void customIteration(DepthFirstIterator<Integer, DefaultWeightedEdge> dfi,MyTravsersalListener<Integer, DefaultWeightedEdge> adapter) {
+	public static ArrayList<Integer>  customIteration(DepthFirstIterator<Integer, DefaultWeightedEdge> dfi,MyTravsersalListener<Integer, DefaultWeightedEdge> adapter) {
+		ArrayList<Integer> averages = new ArrayList<>();
+		Integer next;
+		int sum=0;
+		int avg= 0 ;
+		int cnt = 0;
 		
 	    dfi.addTraversalListener(adapter);
+	    double tmp = adapter.startOfNewTree;
 	    while (dfi.hasNext()) {
-	    	System.out.println("Is Start? : "+adapter.isStartOfNewTree);
-	        System.out.println("Next is : "+dfi.next());
-    		
+	    	
+	    	if(tmp==adapter.startOfNewTree) {
+	    		sum+= map.get(dfi.next());
+	    		cnt++;
+	    	}
+	    	else {
+	    		avg = sum/cnt ; 
+	    		averages.add(avg);
+	    		sum = map.get(dfi.next());
+	    		cnt = 1;
+	    		System.out.println("AVG:"+avg);
+	    	}
+	     	System.out.println("Is End? : "+adapter.startOfNewTree);
+	     	
+	       
+	   
+	     	tmp = adapter.startOfNewTree;
     		
 
 	    }
+	    avg = sum/cnt ; 
+	    System.out.println("AVG:"+avg);
+	    averages.add(avg);
+	    return averages;
 	}
+	
+	public static void  customIteration(DepthFirstIterator<Integer, DefaultWeightedEdge> dfi,MyTravsersalListener<Integer, DefaultWeightedEdge> adapter, ArrayList<Integer> avgs) {
+		ArrayList<Integer> averages = new ArrayList<>();
+		int cnt = 0;
+		int i=0;
+	    dfi.addTraversalListener(adapter);
+	    double tmp = adapter.startOfNewTree;
+	    while (dfi.hasNext()) {
+	    	if(cnt==0) {
+	    		map.replace(map.get(dfi.next()), avgs.get(0));
+	    		cnt++;
+	    	}
+	    	else
+	    	if(tmp==adapter.startOfNewTree) {
+	    		map.replace(map.get(dfi.next()), avgs.get(i));
+	    		cnt++;
+	    	}
+	    	else {
+	    		map.replace(dfi.next(), avgs.get(i));
+	    		i++;
+	    		cnt++;
+	    		
+	    	}
+	    	
+	    	if(i==averages.size())
+	    		map.replace(map.get(dfi.next()), avgs.get(0));
+	     	System.out.println("Is End? : "+adapter.startOfNewTree);
+
+	       
+	   
+	     	tmp = adapter.startOfNewTree;
+    		
+
+	    }
+		i++;
+		
+		//map.replace(dfi.next(), avgs.get(i));
+	    //System.out.println("AVG:"+avg);
+	//    averages.add(avg);
+	    //return averages;
+	}
+	
 	
 	public static  MySpanningTree<Integer> mstKruskal(SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph ){
 		double weight = 0;
 		
-		ArrayList<Integer> vertexSet = new ArrayList<>(graph.vertexSet());
-		DisjointSet disjointSet = new DisjointSet(vertexSet);
+	//	ArrayList<Integer> vertexSet = new ArrayList<>(graph.vertexSet());
+		DisjointSet disjointSet = new DisjointSet(graph.vertexSet());
 		Stack<DefaultWeightedEdge> stackOfEdges = new Stack<>();
 	
 		ArrayList<DefaultWeightedEdge> edges = new ArrayList<>(graph.edgeSet());
@@ -165,6 +234,40 @@ public static HashMap<Integer, Integer> map;
 		Collections.sort(edges, (e1,e2) -> Double.valueOf(graph.getEdgeWeight(e1)).compareTo(graph.getEdgeWeight(e2)));
 		return spanningTree; 
 	}
+/*	public static MySpanningTree<Integer> MSTVersion2 (SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph ){
+		double weight = 0;
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> spanningGraph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+	//	ArrayList<Integer> vertexSet = new ArrayList<>(graph.vertexSet());
+		Stack<DefaultWeightedEdge> stackOfEdges = new Stack<>();
+		CycleDetector<Integer, DefaultWeightedEdge> cycleDetector = new CycleDetector<>(spanningGraph);
+		
+		ArrayList<DefaultWeightedEdge> edges = new ArrayList<>(graph.edgeSet());
+		Collections.sort(edges, (e1,e2) -> Double.valueOf(graph.getEdgeWeight(e1)).compareTo(graph.getEdgeWeight(e2)));
+		ArrayList<DefaultWeightedEdge> nonEdgelist = new ArrayList<>();
+		
+		
+		for(DefaultWeightedEdge edge : edges) {
+			Integer src = graph.getEdgeSource(edge);
+			Integer target = graph.getEdgeTarget(edge);
+			
+			//System.out.println("1>>>");
+			if(cycleDetector.detectCycles()) {
+				//System.out.println("we are here");
+				nonEdgelist.add(edge);
+				continue;
+			}
+			//System.out.println("2>>>");
+			spanningGraph.addEdge(src, target);
+			stackOfEdges.push(edge);
+			weight += graph.getEdgeWeight(edge);
+			//System.out.println("3>>>");
+			
+		}
+	
+				MySpanningTree<Integer> spanningTree = new MySpanningTree<>(weight, nonEdgelist, stackOfEdges);
+		
+		return spanningTree; 
+	}*/
 
 
 

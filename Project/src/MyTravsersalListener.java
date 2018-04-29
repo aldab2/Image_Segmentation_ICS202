@@ -7,33 +7,28 @@ public class MyTravsersalListener<V, E> extends TraversalListenerAdapter<V, E> {
 
 	public int  startOfNewTree = 0;
 	public int tmp= startOfNewTree;
-	public boolean  isStartOfNewTree = true;
+	public boolean  isStartOfNewTree = false;
 	@Override
 	public void connectedComponentStarted(ConnectedComponentTraversalEvent e) {
+	isStartOfNewTree = false;
 	
-	startOfNewTree +=10;
-	if( tmp == startOfNewTree)
-		isStartOfNewTree = true;
-	else 
-		isStartOfNewTree = false;
 		super.connectedComponentStarted(e);
 	}
-	@Override
+/*	@Override
 	public void edgeTraversed(EdgeTraversalEvent<E> e) {
 	
 		if( tmp == startOfNewTree)
-			isStartOfNewTree = true;
-		else 
 			isStartOfNewTree = false;
+		else 
+			isStartOfNewTree = true;
 		super.edgeTraversed(e);
-	}
-	@Override
+	}*/
+/*	@Override
 	public void vertexTraversed(VertexTraversalEvent<V> e) {
-		
 		if( tmp == startOfNewTree)
-			isStartOfNewTree = true;
-		else 
 			isStartOfNewTree = false;
+		else 
+			isStartOfNewTree = true;
 		super.vertexTraversed(e);
 	}
 	
@@ -42,20 +37,22 @@ public class MyTravsersalListener<V, E> extends TraversalListenerAdapter<V, E> {
 	
 
 		if( tmp == startOfNewTree)
-			isStartOfNewTree = true;
-		else 
 			isStartOfNewTree = false;
+		else 
+			isStartOfNewTree = true;
 		
 		super.vertexFinished(e);
-	}
+	}*/
 
 	@Override
 	public void connectedComponentFinished(ConnectedComponentTraversalEvent e) {
-		tmp = startOfNewTree;
+		startOfNewTree +=10;
+		/*
 		if( tmp == startOfNewTree)
-			isStartOfNewTree = true;
-		else 
 			isStartOfNewTree = false;
+		else 
+			isStartOfNewTree = true;*/
+	isStartOfNewTree = true;
 		super.connectedComponentFinished(e);
 	}
 	
