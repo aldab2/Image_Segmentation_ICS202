@@ -8,7 +8,13 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
-
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.*;
+import java.awt.Color;
+import java.awt.image.*;
 import org.jgrapht.*;
 import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm.SpanningTree;
@@ -19,17 +25,13 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
-
-import com.sun.javafx.geom.Edge;
-
-
+//import com.sun.javafx.geom.Edge
 public class ImageSeg2 {
 	
-	//static int[][] coloeredPixels= {{10,2,4,7},{5,6,11,8},{9,13,3,2},{10,15,13,4}};
-static int[][] coloeredPixels = {{1,5,2},{4,9,6},{3,7,2}};
-//	static int[][] coloeredPixels = new int[550][500];
-	static int rows = coloeredPixels.length;
-	static int cols = coloeredPixels[0].length;
+	//static int[][] greyPixels= {{10,2,4,7},{5,6,11,8},{9,13,3,2},{10,15,13,4}};
+//static int[][] greyPixels = {{1,5,2},{4,9,6},{3,7,2}};
+//	static int[][] greyPixels = new int[550][500];
+
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> fourNeighbored;
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> eightNeighbored;	
 public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph;
@@ -37,71 +39,69 @@ public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> forest;
 public static HashMap<Integer, Integer> map;
 public static ArrayList<Integer> anything = new ArrayList<>();
 
-	public static void main(String...strings) {
+static int[][] coloeredPixels;
+static int[][] greyPixels;
+static int[][] greyNoisePixels;
+static BufferedImage img = null;
+static BufferedImage greyImage;
+ static BufferedImage greyNoisedImage;
+
+ 
+	public static void main(String...strings) throws IOException {
+		
+		//READING THE IMAGE
+		 img = ImageIO.read(new File("Images/kitty.jpg")); // Grayscale Image output
+		  greyImage =  ImageIO.read(new File("Images/kitty.jpg"));
+		  greyNoisedImage=   ImageIO.read(new File("Images/kitty.jpg"));
+		     int width = img.getWidth() ;
+		    int height = img.getHeight() ;
+		    coloeredPixels = new int[height][width] ;
+
+		    greyPixels = getPixels(coloeredPixels);
+		    greyPixels = toGreyScale(greyPixels);
+		    greyImage =  setImageToPixels(greyPixels,greyImage);
+		    
+		    
+		    greyNoisePixels = toGreyAndNoised(greyPixels);
+		     
+		     greyNoisedImage =setImageToPixels(greyNoisePixels,greyNoisedImage);
+		    
 		graph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		fourNeighbored = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		forest = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		map = new HashMap<>();
 		
 		eightNeighbored =  new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
-		for(int i=0;i<(rows*cols);i++) {
+		for(int i=0;i<(height * width);i++) {
 			graph.addVertex(i);
 			forest.addVertex(i);
 		}
 		
-	//	graph.setEdgeWeight(graph.addEdge(0, 3), Math.abs(coloeredPixels[0][0]-coloeredPixels[0][1]));
 	
-	
-	
-		
 		fourNeighbored = fourNeighbored(graph);
 
-		//forest = fourNeighbored(graph);
-		//System.out.println(fourNeighbored);
-		
-		
-
-		//KruskalMinimumSpanningTree<Integer,DefaultWeightedEdge > mst = new KruskalMinimumSpanningTree<>(fourNeighbored); 
-		int R= 4;
-		long start = System.nanoTime() ;
-		MySpanningTree<Integer> mymst =   mstKruskal(fourNeighbored);
-		System.out.println(mymst.stackOfEdges);
-		
-	for(int i=1;i<R;i++) {
-		System.out.println("Popped:"+mymst.pop());
-		}
-		
 	
-		
-		for(int i=0;i<mymst.stackOfEdges.size();i++) {
-			fourNeighbored.removeAllEdges(mymst.nonEdges);
-		}
-		
-		udpateMaping(map);
-		customIteration(new DepthFirstIterator<>(fourNeighbored),new MyTravsersalListener<>(), customIteration(new DepthFirstIterator<>(fourNeighbored), new MyTravsersalListener<>()));
-System.out.println(map);
-		
-		//Collections.sort(mymst.edges,(int1,int2)-> Integer.valueOf(int1).compareTo(int2));
-		//eightNeighbored = eightNeighbored(graph);
-		
-		
-		
-		/*for(int i=0;i<map.size();i++)
-			System.out.println(map.get(i));*/
-		
-		//System.out.println(mst.getSpanningTree());
+		mst(fourNeighbored, 2);
 
+			
 		
-		System.out.println(mymst.weight + " Stack: "+mymst.stackOfEdges+"\n Non Edges: "+ mymst.nonEdges + "\n Forest edges: " + fourNeighbored.edgeSet());
-		//System.out.println("Time is "+(System.nanoTime()-start)/1e9);
-		
+		 
+	    try {
+	    	File outputFile = new File("GreyImage.png");
+	    	ImageIO.write(greyImage, "png", outputFile);
 
-
-		
-		
+	    	/*File outputFile2 = new File("GreyNoisedImage.png");
+		    		ImageIO.write(greyNoisedImage, "png", outputFile2);*/
+	    }
+	    catch(IOException e) {
+	    	
+	    }
 		
 		
 	}
+	
+	
+	
 	public static MySpanningTree<Integer> rmst(SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph, int pixels, int reigons){
 		MySpanningTree<Integer> mySpanningTree = new MySpanningTree<>(0, null,null);
 		for( int i= pixels-2;i>reigons-1;i--) {
@@ -234,88 +234,107 @@ System.out.println(map);
 		Collections.sort(edges, (e1,e2) -> Double.valueOf(graph.getEdgeWeight(e1)).compareTo(graph.getEdgeWeight(e2)));
 		return spanningTree; 
 	}
-/*	public static MySpanningTree<Integer> MSTVersion2 (SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph ){
-		double weight = 0;
-		SimpleWeightedGraph<Integer, DefaultWeightedEdge> spanningGraph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
-	//	ArrayList<Integer> vertexSet = new ArrayList<>(graph.vertexSet());
-		Stack<DefaultWeightedEdge> stackOfEdges = new Stack<>();
-		CycleDetector<Integer, DefaultWeightedEdge> cycleDetector = new CycleDetector<>(spanningGraph);
-		
-		ArrayList<DefaultWeightedEdge> edges = new ArrayList<>(graph.edgeSet());
-		Collections.sort(edges, (e1,e2) -> Double.valueOf(graph.getEdgeWeight(e1)).compareTo(graph.getEdgeWeight(e2)));
-		ArrayList<DefaultWeightedEdge> nonEdgelist = new ArrayList<>();
-		
-		
-		for(DefaultWeightedEdge edge : edges) {
-			Integer src = graph.getEdgeSource(edge);
-			Integer target = graph.getEdgeTarget(edge);
-			
-			//System.out.println("1>>>");
-			if(cycleDetector.detectCycles()) {
-				//System.out.println("we are here");
-				nonEdgelist.add(edge);
-				continue;
-			}
-			//System.out.println("2>>>");
-			spanningGraph.addEdge(src, target);
-			stackOfEdges.push(edge);
-			weight += graph.getEdgeWeight(edge);
-			//System.out.println("3>>>");
-			
-		}
-	
-				MySpanningTree<Integer> spanningTree = new MySpanningTree<>(weight, nonEdgelist, stackOfEdges);
-		
-		return spanningTree; 
-	}*/
+
 
 
 
 	public static void udpateMaping(HashMap<Integer, Integer> map) {
 		int k=0;
-		for(int i=0;i<coloeredPixels.length;i++)
-			for(int j=0;j<coloeredPixels[i].length;j++,k++) {
-				map.put(k, coloeredPixels[i][j]);
+		for(int i=0;i<greyPixels.length;i++)
+			for(int j=0;j<greyPixels[i].length;j++,k++) {
+				map.put(k, greyPixels[i][j]);
 			}
 	}
 	
+	//MST METHOD
+	public static void mst(SimpleWeightedGraph<Integer, DefaultWeightedEdge> fourNeighbored, int R){
+		MySpanningTree<Integer> mymst =   mstKruskal(fourNeighbored);
+
+	
+	for(int i=1;i<R;i++) {
+		mymst.pop();
+		}
+		
+		for(int i=0;i<mymst.stackOfEdges.size();i++) {
+			fourNeighbored.removeAllEdges(mymst.nonEdges);
+		}
+		udpateMaping(map);
+		customIteration(new DepthFirstIterator<>(fourNeighbored),new MyTravsersalListener<>(), customIteration(new DepthFirstIterator<>(fourNeighbored), new MyTravsersalListener<>()));
+		
+		
+		for(int i = 0; i < greyPixels.length;i++) {
+			for(int j = 0; j < greyPixels[i].length;j++) {
+				greyPixels[i][j] = map.get(i);
+				System.out.println(greyPixels[i][j]);
+
+			}
+		}
+	}
+	
+	//RMST METHOD
+	public static void rmst(SimpleWeightedGraph<Integer, DefaultWeightedEdge> fourNeighbored, int R){
+		for(int i = (img.getHeight() * img.getWidth()) -2; i < R;i++ ) {
+			MySpanningTree<Integer> mymst =   mstKruskal(fourNeighbored);
+			
+			for(int j=1;j<R;j++) {
+				mymst.pop();
+				}
+				
+				for(int k=0;k<mymst.stackOfEdges.size();k++) {
+					fourNeighbored.removeAllEdges(mymst.nonEdges);
+				}
+				udpateMaping(map);
+				customIteration(new DepthFirstIterator<>(fourNeighbored),new MyTravsersalListener<>(), customIteration(new DepthFirstIterator<>(fourNeighbored), new MyTravsersalListener<>()));
+				
+		}
+		
+		
+		for(int i = 0; i < greyPixels.length;i++) {
+			for(int j = 0; j < greyPixels[i].length;j++) {
+				greyPixels[i][j] = map.get(i);
+				System.out.println(greyPixels[i][j]);
+
+			}
+		}
+	}
 	
 	
 	public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> fourNeighbored(SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph) {
-		
+		 int width = img.getWidth() ;
+		    int height = img.getHeight() ;
 		 
 		int k=0;
 		int j=0;
-		for(int i=0;i<(rows*cols);i++) {
+		for(int i=0;i<(width*height);i++) {
 		
 			
 		//System.out.println(i+":"+j+":"+k);
-			if(i < cols) {
+			if(i < height) {
 				// In the First Row
-			if(i%cols ==0) {
+			if(i%height ==0) {
 			//	System.out.println("1st Elem in the 1st Row");
 				// 1st Elem in the Row
 				
-				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 				//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 				
-				graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-				//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+				//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 				
 				
 				k++;
 				
 			}
-			else if((i+1)% cols ==0) {
+			else if((i+1)% height ==0) {
 				//System.out.println("last Elem in the 1st Row");
 				// Last El in  the Row
 				/*System.out.println("In this Stage i:"+i+" J:"+j+" K:"+k);
-				graph.addOneWayEdge(i, Math.abs(coloeredPixels[j][i]-coloeredPixels[j][i-1]), i-1);
-				graph.addOneWayEdge(i,Math.abs(coloeredPixels[j][i]-coloeredPixels[j+1][i]), i+cols);*/
+				graph.addOneWayEdge(i, Math.abs(greyPixels[j][i]-greyPixels[j][i-1]), i-1);
+				graph.addOneWayEdge(i,Math.abs(greyPixels[j][i]-greyPixels[j+1][i]), i+height);*/
 				
 				
-				graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][i]-coloeredPixels[j+1][i]));
-				//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][i]-greyPixels[j+1][i]));
+				//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 			
 				j++;
 				k=0;
@@ -326,29 +345,29 @@ System.out.println(map);
 				
 				
 
-				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 			//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 				
-				graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-			//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+			//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 
 			
 				k++;
 			}
 			}
-			else if(i>=(rows-1)*cols) {
+			else if(i>=(width-1)*height) {
 				
 				// In the Last Row
-				if(i%cols ==0) {
+				if(i%height ==0) {
 					//System.out.println("1st Elem in the last Row");
 					// 1st Elem in the Row
 		
-					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 			//		System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
 					k++;
 				}
-				else if((i+1)% cols ==0) {
+				else if((i+1)% height ==0) {
 					//System.out.println("Last Elem in the last Row");
 
 					// Last El in  the Row
@@ -363,7 +382,7 @@ System.out.println(map);
 				else {
 					//System.out.println("Between Elem in the last Row");
 
-				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 				//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
 					k++;
@@ -372,24 +391,24 @@ System.out.println(map);
 			else {
 
 				// Between Fist Col And Last Col
-				if(i%cols ==0) {
+				if(i%height ==0) {
 				//	System.out.println("1st Elem in between");
 
 					// 1st Elem in the Row
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 					//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-				//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+				//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 					
 					k++;
 				}
-				else if((i+1)% cols ==0) {
+				else if((i+1)% height ==0) {
 				//	System.out.println("last Elem in between");
 					// Last El in  the Row
-					graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-				//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+				//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 					
 					
 					j++;	
@@ -401,11 +420,11 @@ System.out.println(map);
 					// In Between Explicitly
 				
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 					//System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-				//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+				//	System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 					
 					
 					k++;
@@ -419,45 +438,46 @@ System.out.println(map);
 		return graph;
 	}
 	public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> eightNeighbored(SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph) {
-		
+		 int width = img.getWidth() ;
+		    int height = img.getHeight() ;
 		 
 		int k=0;
 		int j=0;
-		for(int i=0;i<(rows*cols);i++) {
+		for(int i=0;i<(width*height);i++) {
 		
 			
 		//System.out.println(i+":"+j+":"+k);
-			if(i < cols) {
+			if(i < height) {
 				// In the First Row
-			if(i%cols ==0) {
+			if(i%height ==0) {
 			//	System.out.println("1st Elem in the 1st Row");
 				// 1st Elem in the Row
 	
-				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 				
-				graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 				
 				// Right Diagonal
-				graph.setEdgeWeight(graph.addEdge(i, i+cols+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k+1]));
-				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols+1)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height+1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k+1]));
+				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height+1)));
 				
 				
 				
 				k++;
 				
 			}
-			else if((i+1)% cols ==0) {
+			else if((i+1)% height ==0) {
 				//System.out.println("last Elem in the 1st Row");
 				// Last El in  the Row
 				
-				graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][i]-coloeredPixels[j+1][i]));
-				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][i]-greyPixels[j+1][i]));
+				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 				
 				// Left Diagonal
-				graph.setEdgeWeight(graph.addEdge(i, i+cols-1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k-1]));
-				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols-1)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height-1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k-1]));
+				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height-1)));
 			
 				j++;
 				k=0;
@@ -468,37 +488,37 @@ System.out.println(map);
 		
 				
 
-				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 				
-				graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
+				graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
 				
-				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 				// Right Diagonal
-				graph.setEdgeWeight(graph.addEdge(i, i+cols+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k+1]));
-				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols+1)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height+1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k+1]));
+				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height+1)));
 				
 				// Left Diagonal
-				graph.setEdgeWeight(graph.addEdge(i, i+cols-1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k-1]));
-				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols-1)));
+				graph.setEdgeWeight(graph.addEdge(i, i+height-1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k-1]));
+				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height-1)));
 
 			
 				k++;
 			}
 			}
-			else if(i>=(rows-1)*cols) {
+			else if(i>=(width-1)*height) {
 				
 				// In the Last Row
-				if(i%cols ==0) {
+				if(i%height ==0) {
 					//System.out.println("1st Elem in the last Row");
 					// 1st Elem in the Row
 
-					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
 					k++;
 				}
-				else if((i+1)% cols ==0) {
+				else if((i+1)% height ==0) {
 					//System.out.println("Last Elem in the last Row");
 
 					// Last El in  the Row
@@ -518,7 +538,7 @@ System.out.println(map);
 
 					// In Between but in the last row
 
-				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+				graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 				System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
 					k++;
@@ -527,36 +547,36 @@ System.out.println(map);
 			else {
 
 				// Between Fist Col And Last Col
-				if(i%cols ==0) {
+				if(i%height ==0) {
 				//	System.out.println("1st Elem in between");
 
 					// 1st Elem in the Row
 
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 					
 					// Right Diagonal
-					graph.setEdgeWeight(graph.addEdge(i, i+cols+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k+1]));
-					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols+1)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height+1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k+1]));
+					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height+1)));
 				
 					
 					k++;
 				}
-				else if((i+1)% cols ==0) {
+				else if((i+1)% height ==0) {
 				//	System.out.println("last Elem in between");
 					// Last El in  the Row
 
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 			
 					// Left Diagonal
-					graph.setEdgeWeight(graph.addEdge(i, i+cols-1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k-1]));
-					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols-1)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height-1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k-1]));
+					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height-1)));
 					
 					
 					j++;	
@@ -568,18 +588,18 @@ System.out.println(map);
 					// In Between Explicitly
 
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j][k+1]));
+					graph.setEdgeWeight(graph.addEdge(i, i+1), Math.abs(greyPixels[j][k]-greyPixels[j][k+1]));
 					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+1)));
 					
-					graph.setEdgeWeight(graph.addEdge(i, i+cols), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k]));
-					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height), Math.abs(greyPixels[j][k]-greyPixels[j+1][k]));
+					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height)));
 					
 					// Right Diagonal
-					graph.setEdgeWeight(graph.addEdge(i, i+cols+1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k+1]));
-					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols+1)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height+1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k+1]));
+					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height+1)));
 					// Left Diagonal
-					graph.setEdgeWeight(graph.addEdge(i, i+cols-1), Math.abs(coloeredPixels[j][k]-coloeredPixels[j+1][k-1]));
-					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+cols-1)));
+					graph.setEdgeWeight(graph.addEdge(i, i+height-1), Math.abs(greyPixels[j][k]-greyPixels[j+1][k-1]));
+					System.out.println(graph.getEdgeWeight(graph.getEdge(i, i+height-1)));
 					
 					
 					k++;
@@ -593,5 +613,92 @@ System.out.println(map);
 		return graph;
 	}
 	
+	
+	//PHASE 1 STUFF
+	
+	public static BufferedImage setImageToPixels(int[][] pixels, BufferedImage img2) {
+		for (int y=0 ; y < pixels.length ; y++)
+		    for (int x=0 ; x < pixels[y].length ; x++) {
+		    	img2.setRGB(x, y, pixels[y][x]);
+		    	
+		    }
+		return img2;
+	}
+	
+	public static int[][] getPixels(int[][] p) throws IOException {
+		int [][] tmp = new int[p.length][p[0].length];
+		for (int y=0 ; y < tmp.length ; y++)
+	        for (int x=0 ; x < tmp[y].length ; x++) {
+	        	tmp[y][x] = p[y][x];
+	        }
+		
+		for (int y=0 ; y < tmp.length ; y++)
+	        for (int x=0 ; x < tmp[y].length ; x++) {
+	        	/*int r = img.getRaster().getSample(x, y, 0) ;
+	            int g = img.getRaster().getSample(x, y, 1) ;
+	            int b = img.getRaster().getSample(x, y, 2) ;
+	            p[y][x] = r+g+b;
+	            p[y][x] = (int)( 0.2125 * r + 0.7125 *  g + 0.0721 * b)  + noise();
+	            if(p[y][x] < 0)
+	            	p[y][x] = 0;
+	            else if(p[y][x] > 255)
+	            	p[y][x] = 255;
+	            p[y][x] = (p[y][x]<<16)|(p[y][x]<<8)|(p[y][x]);*/
+	        	tmp[y][x]= img.getRGB(x	, y);
+	        	
+	           
+	            }
+
+	    return tmp ;
+	    
+	}
+	public static int[][] toGreyScale(int[][] p){
+		int [][] tmp = new int[p.length][p[0].length];
+		for (int y=0 ; y < tmp.length ; y++)
+	        for (int x=0 ; x < tmp[y].length ; x++) {
+	        	tmp[y][x] = p[y][x];
+	        }
+		for (int y=0 ; y <tmp.length ; y++)
+	        for (int x=0 ; x < tmp[y].length ; x++) {
+	        	 int r = (tmp[y][x] >> 16) & 0xFF;
+	             int g = (tmp[y][x] >> 8) & 0xFF;
+	             int b = (tmp[y][x] & 0xFF);
+        tmp[y][x] = r+g+b;
+        tmp[y][x] = (int)( 0.2125 * r + 0.7125 *  g + 0.0721 * b)  ;
+       
+        tmp[y][x] = (tmp[y][x]<<16)|(tmp[y][x]<<8)|(tmp[y][x]);
+	        }
+		return tmp;
+	}
+	
+	public static int[][] toGreyAndNoised(int[][] p){
+		int [][] tmp = new int[p.length][p[0].length];
+		for (int y=0 ; y < tmp.length ; y++)
+	        for (int x=0 ; x < tmp[y].length ; x++) {
+	        	tmp[y][x] = p[y][x];
+	        }
+		
+		
+		for (int y=0 ; y < tmp.length ; y++)
+	        for (int x=0 ; x < tmp[y].length ; x++) {
+	        	int r = (tmp[y][x] >> 16) & 0xFF;
+	             int g = (tmp[y][x] >> 8) & 0xFF;
+	             int b = (tmp[y][x] & 0xFF);
+	            tmp[y][x] = r+g+b;
+	            tmp[y][x] = (int)( 0.2125 * r + 0.7125 *  g + 0.0721 * b)+noise()  ;
+	           
+	            if(tmp[y][x] < 0)
+	            	tmp[y][x] = 0;
+	            else if(tmp[y][x] > 255)
+	            	tmp[y][x] = 255;
+	            
+	            tmp[y][x] = (tmp[y][x]<<16)|(tmp[y][x]<<8)|(tmp[y][x]);
+	        }
+		
+		return tmp;
+	}
+	public static int noise() {
+		return (int)(255*(Math.random()-0.5));
+	}
 }
 
